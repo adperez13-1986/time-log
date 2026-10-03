@@ -15,15 +15,6 @@ const MAX_PIN_FAILS = 5;
 const LOCKOUT_SECONDS = 15 * 60;
 
 const PEOPLE_SHEET = 'People';
-// Only used to fill the People tab the first time it is created.
-const SEED_PEOPLE = [
-  ['JAM', ['Jon', 'Ethan', 'Andre', 'Alyssa', 'Harry']],
-  ['VIA', ['Clayton', 'Grace Perez', 'Amy', 'Rhyzza', 'Abigail', 'Hazel', 'Richard', 'Lorrah']],
-  ['TEAM', ['Adrian DG.', 'Hanika', 'Femi', 'Phia', 'Louise', 'Rosheen', 'Yannah', 'Sam', 'Kyree', 'Kyle']],
-  ['MAN', ['Jhondree', 'Adrian P.', 'Jajie', 'Kevin']],
-  ['SAN', ['Grace Palomaria', 'Betty', 'Au', 'Elsie', 'Shiennalyn', 'Joana', 'Rhoda', 'Allan', 'William', 'EJ', 'Bryan']],
-];
-
 const COL = { loggedAt: 1, name: 2, time: 3, manual: 4, remarks: 5, edited: 6 };
 
 function doPost(e) {
@@ -152,9 +143,7 @@ function peopleList() {
   let sh = ss.getSheetByName(PEOPLE_SHEET);
   if (!sh) {
     sh = ss.insertSheet(PEOPLE_SHEET);
-    const rows = [['Group', 'Name']];
-    SEED_PEOPLE.forEach(([g, names]) => names.forEach((n) => rows.push([g, n])));
-    sh.getRange(1, 1, rows.length, 2).setValues(rows);
+    sh.getRange(1, 1, 1, 2).setValues([['Group', 'Name']]);
     sh.setFrozenRows(1);
   }
   const last = sh.getLastRow();

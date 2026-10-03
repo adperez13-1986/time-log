@@ -147,7 +147,7 @@
 <script src="names.js"></script>
 <script>
   const GROUP_COLORS = ['var(--g1)', 'var(--g2)', 'var(--g3)', 'var(--g4)', 'var(--g5)'];
-  // Groups of names come from the People tab in the Sheet (names.js is only a fallback).
+  // Groups of names come from the People tab in the Sheet.
   let GROUPS = [];
   let GROUP_NAMES = [];
   let ALL = [];
@@ -223,8 +223,8 @@
         return loadPresent();
       }
       if (!data.ok) throw new Error(data.error);
-      GROUPS = data.people || window.TIME_LOG_GROUPS || [];
-      GROUP_NAMES = data.groupNames || window.TIME_LOG_GROUP_NAMES || [];
+      GROUPS = data.people || [];
+      GROUP_NAMES = data.groupNames || [];
       ALL = GROUPS.flat();
       present = {};
       data.present.forEach((p) => { present[p.name] = p; });
@@ -232,10 +232,6 @@
       $('count').innerHTML = `${n} of ${ALL.length} present <span>today</span>`;
     } catch (err) {
       $('count').textContent = 'Could not load who is here. Pull down to refresh.';
-      if (!GROUPS.length) {
-        GROUPS = window.TIME_LOG_GROUPS || []; ALL = GROUPS.flat();
-        GROUP_NAMES = window.TIME_LOG_GROUP_NAMES || [];
-      }
     }
     render();
     const want = selected || store.get();
