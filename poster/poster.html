@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>MDN Time Log Poster</title>
+<style>
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { width: 210mm; height: 297mm; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    color: #1b3a66; background: #fff; }
+  .page { height: 100%; padding: 16mm 18mm 14mm; display: flex; flex-direction: column; align-items: center; }
+  .head { display: flex; align-items: center; gap: 6mm; align-self: stretch; justify-content: center; }
+  .head img { width: 30mm; }
+  .org { line-height: 1.15; }
+  .org .jil { font-size: 11mm; font-weight: 800; letter-spacing: .02em; }
+  .org .mdn { font-size: 5mm; font-weight: 500; opacity: .8; }
+  .rule { width: 100%; height: 1.2mm; background: #1b3a66; border-radius: 1mm; margin: 9mm 0 10mm; }
+  h1 { font-size: 21mm; font-weight: 800; margin: 0; letter-spacing: -.01em; }
+  .sub { font-size: 7mm; margin: 2mm 0 9mm; font-weight: 400; }
+  .qr { width: 112mm; height: 112mm; padding: 6mm; border: 1.2mm solid #1b3a66; border-radius: 6mm; }
+  .qr svg { width: 100%; height: 100%; display: block; }
+  .steps { display: flex; gap: 6mm; margin-top: 11mm; }
+  .step { display: flex; align-items: center; gap: 3mm; font-size: 6mm; font-weight: 600; }
+  .step b { width: 10mm; height: 10mm; border-radius: 50%; background: #1b3a66; color: #fff;
+    display: inline-flex; align-items: center; justify-content: center; font-size: 5.5mm; }
+  .note { font-size: 4.6mm; margin-top: 6mm; opacity: .85; }
+  .groups { margin-top: auto; display: flex; gap: 4mm; }
+  .groups span { font-size: 5mm; font-weight: 700; letter-spacing: .08em; padding: 2mm 5mm;
+    border: .5mm solid #1b3a66; border-radius: 10mm; }
+  .url { font-size: 3.8mm; margin-top: 6mm; opacity: .7; }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="head">
+    <img src="jil-logo.png" alt="JIL logo">
+    <div class="org">
+      <div class="jil">JIL Vienna</div>
+      <div class="mdn">Ministry Development Network</div>
+    </div>
+  </div>
+  <div class="rule"></div>
+  <h1>Time Log</h1>
+  <p class="sub">Scan to log your attendance</p>
+  <div class="qr"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 29 29" shape-rendering="crispEdges"><path fill="#ffffff" d="M0 0h29v29H0z"/><path stroke="#1b3a66" d="M0 0.5h7m3 0h1m5 0h4m2 0h7M0 1.5h1m5 0h1m2 0h1m1 0h1m2 0h4m4 0h1m5 0h1M0 2.5h1m1 0h3m1 0h1m1 0h1m2 0h2m1 0h3m1 0h3m1 0h1m1 0h3m1 0h1M0 3.5h1m1 0h3m1 0h1m1 0h2m1 0h3m3 0h1m2 0h1m1 0h1m1 0h3m1 0h1M0 4.5h1m1 0h3m1 0h1m1 0h1m4 0h1m2 0h1m1 0h2m2 0h1m1 0h3m1 0h1M0 5.5h1m5 0h1m1 0h2m1 0h1m2 0h4m4 0h1m5 0h1M0 6.5h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7M8 7.5h1m2 0h1m2 0h2M0 8.5h1m1 0h5m2 0h3m1 0h2m2 0h1m1 0h2m1 0h5M1 9.5h1m2 0h1m3 0h1m1 0h2m1 0h1m2 0h4m2 0h3m3 0h1M0 10.5h2m1 0h2m1 0h3m3 0h1m1 0h2m2 0h1m1 0h2m1 0h2M0 11.5h2m1 0h1m11 0h2m4 0h5m1 0h1M3 12.5h1m2 0h2m1 0h3m1 0h5m1 0h2m4 0h2M2 13.5h1m1 0h1m2 0h1m2 0h1m2 0h1m2 0h1m2 0h1m1 0h4m3 0h1M1 14.5h1m4 0h2m2 0h7m3 0h1m3 0h3M2 15.5h2m3 0h1m1 0h4m1 0h1m1 0h1m1 0h1m5 0h1m2 0h1M0 16.5h1m3 0h6m3 0h2m2 0h1m2 0h1m2 0h1m1 0h2M0 17.5h1m2 0h3m2 0h2m2 0h1m4 0h3m2 0h3m1 0h1m1 0h1M0 18.5h1m2 0h5m3 0h6m1 0h1m1 0h3m1 0h1m1 0h1M0 19.5h1m3 0h1m2 0h2m2 0h2m1 0h1m1 0h1m1 0h1m1 0h5m2 0h1M0 20.5h1m2 0h1m1 0h2m1 0h1m3 0h2m3 0h1m1 0h6m1 0h3M8 21.5h1m1 0h1m2 0h1m2 0h1m3 0h1m3 0h5M0 22.5h7m4 0h1m1 0h4m2 0h2m1 0h1m1 0h3M0 23.5h1m5 0h1m1 0h5m1 0h2m4 0h1m3 0h1m2 0h2M0 24.5h1m1 0h3m1 0h1m1 0h2m1 0h1m5 0h1m2 0h5m1 0h3M0 25.5h1m1 0h3m1 0h1m1 0h1m1 0h2m1 0h1m2 0h1m1 0h4m3 0h4M0 26.5h1m1 0h3m1 0h1m1 0h1m3 0h1m2 0h1m1 0h2m3 0h6M0 27.5h1m5 0h1m6 0h1m2 0h1m1 0h4m1 0h3m1 0h1M0 28.5h7m1 0h1m4 0h2m2 0h2m5 0h1m1 0h1"/></svg>
+</div>
+  <div class="steps">
+    <div class="step"><b>1</b> Scan</div>
+    <div class="step"><b>2</b> Tap your name</div>
+    <div class="step"><b>3</b> Confirm</div>
+  </div>
+  <p class="note">Running late? Add a short remark before you confirm.</p>
+  <div class="groups"><span>JAM</span><span>VIA</span><span>TEAM</span><span>MAN</span><span>SAN</span></div>
+  <div class="url">adperez13-1986.github.io/time-log</div>
+</div>
+</body>
+</html>
