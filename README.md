@@ -36,7 +36,8 @@ When you change `Code.gs` later: Deploy > Manage deployments > edit > Version: N
 
 The Sheet's **People** tab (Group | Name) is the list. The script creates it on first use.
 
-- Add someone: new row, Group = the number of the colour section (1-5, or a new number for a new section), Name as it should show.
+- Add someone: new row, Group = their group's name exactly as written (JAM, VIA, TEAM, MAN, SAN; a new name makes a new section), Name as it should show.
+- Group names show as headings on the page, in the order they first appear in the tab. Rename a group by changing every cell of it in column A.
 - Remove someone: delete the row. Their past log rows stay.
 - Rename: change it in People. The script renames them in the Log tab too (one cell at a time; pasting over several cells won't). A name already used by someone else is refused.
 - Names must be unique (e.g. "Grace Perez" / "Grace Palomaria").

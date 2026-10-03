@@ -27,6 +27,9 @@
   .count span { color: var(--muted); font-weight: 400; }
   .group { border-radius: 12px; padding: 8px; margin-bottom: 10px;
     display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 6px; }
+  .group-title { grid-column: 1 / -1; display: flex; justify-content: space-between;
+    font-weight: 700; font-size: 14px; letter-spacing: .04em; padding: 2px 4px 0; }
+  .group-title span { font-weight: 400; color: var(--muted); }
   .name { appearance: none; border: 2px solid transparent; background: var(--card); color: var(--text);
     border-radius: 9px; padding: 10px; font-size: 16px; text-align: left; cursor: pointer;
     display: flex; justify-content: space-between; align-items: center; gap: 6px; min-height: 48px; }
@@ -146,6 +149,7 @@
   const GROUP_COLORS = ['var(--g1)', 'var(--g2)', 'var(--g3)', 'var(--g4)', 'var(--g5)'];
   // Groups of names come from the People tab in the Sheet (names.js is only a fallback).
   let GROUPS = [];
+  let GROUP_NAMES = [];
   let ALL = [];
   const $ = (id) => document.getElementById(id);
   let selected = null;
@@ -166,6 +170,15 @@
       const g = document.createElement('div');
       g.className = 'group';
       g.style.background = GROUP_COLORS[i % GROUP_COLORS.length];
+      if (GROUP_NAMES[i]) {
+        const t = document.createElement('div');
+        t.className = 'group-title';
+        t.textContent = GROUP_NAMES[i];
+        const c = document.createElement('span');
+        c.textContent = `${names.filter((n) => present[n]).length}/${names.length}`;
+        t.appendChild(c);
+        g.appendChild(t);
+      }
       names.forEach((n) => {
         const b = document.createElement('button');
         b.type = 'button';
@@ -211,6 +224,7 @@
       }
       if (!data.ok) throw new Error(data.error);
       GROUPS = data.people || window.TIME_LOG_GROUPS || [];
+      GROUP_NAMES = data.groupNames || window.TIME_LOG_GROUP_NAMES || [];
       ALL = GROUPS.flat();
       present = {};
       data.present.forEach((p) => { present[p.name] = p; });
@@ -218,7 +232,10 @@
       $('count').innerHTML = `${n} of ${ALL.length} present <span>today</span>`;
     } catch (err) {
       $('count').textContent = 'Could not load who is here. Pull down to refresh.';
-      if (!GROUPS.length) { GROUPS = window.TIME_LOG_GROUPS || []; ALL = GROUPS.flat(); }
+      if (!GROUPS.length) {
+        GROUPS = window.TIME_LOG_GROUPS || []; ALL = GROUPS.flat();
+        GROUP_NAMES = window.TIME_LOG_GROUP_NAMES || [];
+      }
     }
     render();
     const want = selected || store.get();

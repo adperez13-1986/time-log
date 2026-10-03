@@ -17,11 +17,11 @@ const LOCKOUT_SECONDS = 15 * 60;
 const PEOPLE_SHEET = 'People';
 // Only used to fill the People tab the first time it is created.
 const SEED_PEOPLE = [
-  ['1', ['Jon', 'Ethan', 'Andre', 'Alyssa', 'Harry']],
-  ['2', ['Clayton', 'Grace Perez', 'Amy', 'Rhyzza', 'Abigail', 'Hazel', 'Richard', 'Lorrah']],
-  ['3', ['Adrian DG.', 'Hanika', 'Femi', 'Phia', 'Louise', 'Rosheen', 'Yannah', 'Sam', 'Kyree', 'Kyle']],
-  ['4', ['Jhondree', 'Adrian P.', 'Jajie', 'Kevin']],
-  ['5', ['Grace Palomaria', 'Betty', 'Au', 'Elsie', 'Shiennalyn', 'Joana', 'Rhoda', 'Allan', 'William', 'EJ', 'Bryan']],
+  ['JAM', ['Jon', 'Ethan', 'Andre', 'Alyssa', 'Harry']],
+  ['VIA', ['Clayton', 'Grace Perez', 'Amy', 'Rhyzza', 'Abigail', 'Hazel', 'Richard', 'Lorrah']],
+  ['TEAM', ['Adrian DG.', 'Hanika', 'Femi', 'Phia', 'Louise', 'Rosheen', 'Yannah', 'Sam', 'Kyree', 'Kyle']],
+  ['MAN', ['Jhondree', 'Adrian P.', 'Jajie', 'Kevin']],
+  ['SAN', ['Grace Palomaria', 'Betty', 'Au', 'Elsie', 'Shiennalyn', 'Joana', 'Rhoda', 'Allan', 'William', 'EJ', 'Bryan']],
 ];
 
 const COL = { loggedAt: 1, name: 2, time: 3, manual: 4, remarks: 5, edited: 6 };
@@ -42,7 +42,7 @@ function doGet() {
   return json({
     ok: true,
     day: day(new Date()),
-    people: people(),
+    ...peopleOut(),
     present: today().map((r) => ({ name: r.name, time: r.time })),
   });
 }
@@ -76,7 +76,7 @@ function leaderList(body) {
   if (denied) return denied;
   return {
     ok: true,
-    people: people(),
+    ...peopleOut(),
     present: today().map((r) => ({ name: r.name, time: r.time, remarks: r.remarks })),
   };
 }
@@ -136,8 +136,18 @@ function today() {
   return out;
 }
 
-// People tab as groups of names, in sheet order. Blank rows are skipped, repeats ignored.
+// For the page: groups of names plus each group's name (the Group column), in sheet order.
+function peopleOut() {
+  const list = peopleList();
+  return { people: list.groups, groupNames: list.labels };
+}
+
 function people() {
+  return peopleList().groups;
+}
+
+// People tab as groups of names, in sheet order. Blank rows are skipped, repeats ignored.
+function peopleList() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   let sh = ss.getSheetByName(PEOPLE_SHEET);
   if (!sh) {
@@ -148,8 +158,9 @@ function people() {
     sh.setFrozenRows(1);
   }
   const last = sh.getLastRow();
-  if (last < 2) return [];
+  if (last < 2) return { groups: [], labels: [] };
   const groups = [];
+  const labels = [];
   const index = {};
   const seen = {};
   sh.getRange(2, 1, last - 1, 2).getValues().forEach(([g, n]) => {
@@ -157,10 +168,10 @@ function people() {
     const group = String(g).trim();
     if (!name || seen[name]) return;
     seen[name] = true;
-    if (!(group in index)) { index[group] = groups.length; groups.push([]); }
+    if (!(group in index)) { index[group] = groups.length; groups.push([]); labels.push(group); }
     groups[index[group]].push(name);
   });
-  return groups;
+  return { groups: groups, labels: labels };
 }
 
 // Runs whenever someone edits the Sheet by hand. When a name is changed in People,
