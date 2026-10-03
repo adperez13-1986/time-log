@@ -55,11 +55,34 @@
   .done h2 { margin: 12px 0 4px; }
   .done p { color: var(--muted); margin: 0 0 28px; }
   .link { background: none; border: 0; color: var(--accent); font-size: 16px; cursor: pointer; padding: 8px; }
+  .leader-bar { display: flex; justify-content: space-between; align-items: center; gap: 8px;
+    background: var(--accent); color: var(--accent-text); border-radius: 10px; padding: 8px 12px;
+    margin-bottom: 12px; font-size: 14px; }
+  .leader-bar button { background: none; border: 1px solid currentColor; color: inherit; border-radius: 8px;
+    padding: 4px 10px; font-size: 14px; cursor: pointer; }
+  .leader-mode .name.present { cursor: pointer; border-style: dashed; }
+  .name .rem { font-size: 12px; color: var(--muted); }
+  .foot { text-align: center; margin-top: 20px; }
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: flex; align-items: flex-end;
+    justify-content: center; z-index: 10; }
+  .sheet { background: var(--card); width: 100%; max-width: 480px; border-radius: 16px 16px 0 0;
+    padding: 18px 16px calc(18px + env(safe-area-inset-bottom)); }
+  .sheet h3 { margin: 0 0 12px; }
+  .sheet label { display: block; font-size: 14px; color: var(--muted); margin: 10px 0 4px; }
+  .sheet .actions { display: flex; gap: 8px; margin-top: 16px; }
+  .sheet .actions button { flex: 1; }
+  .secondary { border: 1px solid var(--line); border-radius: 12px; padding: 14px; font-size: 16px;
+    background: var(--bg); color: var(--text); cursor: pointer; }
+  .sheet .msg { margin-top: 10px; }
   [hidden] { display: none !important; }
 </style>
 </head>
 <body>
 <main id="form">
+  <div class="leader-bar" id="leaderBar" hidden>
+    <span>Leader mode: tap a logged name to edit</span>
+    <button type="button" id="leaderExit">Exit</button>
+  </div>
   <h1>Time Log</h1>
   <p class="sub">Tap your name, then confirm.</p>
   <p class="count" id="count">Loading who's here…</p>
@@ -74,7 +97,35 @@
     <legend>Remarks (optional)</legend>
     <textarea id="remarks" class="field" maxlength="500" placeholder="e.g. reason for being late"></textarea>
   </fieldset>
+  <div class="foot"><button type="button" class="link" id="leaderOpen">Leader</button></div>
 </main>
+
+<div class="overlay" id="pinPanel" hidden>
+  <form class="sheet" id="pinForm">
+    <h3>Leader PIN</h3>
+    <input type="password" id="pin" class="field" inputmode="numeric" autocomplete="off" aria-label="PIN">
+    <p class="msg" id="pinMsg"></p>
+    <div class="actions">
+      <button type="button" class="secondary" data-close>Cancel</button>
+      <button type="submit" class="confirm">Unlock</button>
+    </div>
+  </form>
+</div>
+
+<div class="overlay" id="editPanel" hidden>
+  <form class="sheet" id="editForm">
+    <h3 id="editTitle"></h3>
+    <label for="editTime">Time (today)</label>
+    <input type="time" id="editTime" class="field" required>
+    <label for="editRemarks">Remarks</label>
+    <textarea id="editRemarks" class="field" maxlength="500"></textarea>
+    <p class="msg" id="editMsg"></p>
+    <div class="actions">
+      <button type="button" class="secondary" data-close>Cancel</button>
+      <button type="submit" class="confirm" id="editSave">Save</button>
+    </div>
+  </form>
+</div>
 
 <main id="done" class="done" hidden>
   <div class="check">&#10003;</div>
@@ -96,7 +147,9 @@
   const ALL = window.TIME_LOG_GROUPS.flat();
   const $ = (id) => document.getElementById(id);
   let selected = null;
-  let present = {}; // name -> ISO time, today only (from the server)
+  let present = {}; // name -> { time, remarks? }, today only (from the server)
+  let leaderPin = null;
+  try { leaderPin = sessionStorage.getItem('timelog.pin'); } catch {}
 
   const store = {
     get() { try { return localStorage.getItem('timelog.name'); } catch { return null; } },
@@ -119,10 +172,11 @@
         b.appendChild(document.createTextNode(n));
         if (present[n]) {
           b.classList.add('present');
-          b.disabled = true;
+          if (leaderPin) b.onclick = () => openEdit(n);
+          else b.disabled = true;
           const at = document.createElement('span');
           at.className = 'at';
-          at.textContent = '✓ ' + clock(present[n]);
+          at.textContent = '✓ ' + clock(present[n].time) + (leaderPin && present[n].remarks ? ' ✎' : '');
           b.appendChild(at);
         } else {
           b.setAttribute('aria-pressed', String(n === selected));
@@ -146,11 +200,16 @@
 
   async function loadPresent() {
     try {
-      const res = await fetch(window.TIME_LOG_ENDPOINT);
-      const data = await res.json();
+      const data = leaderPin
+        ? await post({ action: 'leader', pin: leaderPin })
+        : await (await fetch(window.TIME_LOG_ENDPOINT)).json();
+      if (!data.ok && leaderPin && (data.error === 'pin' || data.error === 'locked')) {
+        setLeader(null);
+        return loadPresent();
+      }
       if (!data.ok) throw new Error(data.error);
       present = {};
-      data.present.forEach((p) => { present[p.name] = p.time; });
+      data.present.forEach((p) => { present[p.name] = p; });
       const n = ALL.filter((x) => present[x]).length;
       $('count').innerHTML = `${n} of ${ALL.length} present <span>today</span>`;
     } catch (err) {
@@ -180,13 +239,7 @@
     $('confirm').disabled = true;
     $('confirm').textContent = 'Saving…';
     try {
-      // text/plain keeps this a "simple" request, so no CORS preflight to Apps Script.
-      const res = await fetch(window.TIME_LOG_ENDPOINT, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify(payload),
-      });
-      const data = await res.json();
+      const data = await post(payload);
       if (data.error === 'already') {
         const who = selected;
         await loadPresent();
@@ -195,7 +248,7 @@
       }
       if (!data.ok) throw new Error(data.error || 'Could not save');
       store.set(selected);
-      present[data.name] = data.time;
+      present[data.name] = { name: data.name, time: data.time };
       showDone(data);
     } catch (err) {
       $('msg').textContent = 'Not saved, please try again. (' + err.message + ')';
@@ -219,9 +272,88 @@
     loadPresent();
   };
 
+  // text/plain keeps this a "simple" request, so no CORS preflight to Apps Script.
+  async function post(payload) {
+    const res = await fetch(window.TIME_LOG_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload),
+    });
+    return res.json();
+  }
+
+  // Leader mode: PIN-unlocked editing of today's time and remarks.
+  function setLeader(pin) {
+    leaderPin = pin;
+    try { pin ? sessionStorage.setItem('timelog.pin', pin) : sessionStorage.removeItem('timelog.pin'); } catch {}
+    $('leaderBar').hidden = !pin;
+    $('leaderOpen').hidden = !!pin;
+    document.body.classList.toggle('leader-mode', !!pin);
+  }
+
+  const PIN_ERRORS = { pin: 'Wrong PIN.', locked: 'Too many wrong PINs. Try again in 15 minutes.' };
+
+  $('leaderOpen').onclick = () => {
+    $('pin').value = ''; $('pinMsg').textContent = '';
+    $('pinPanel').hidden = false; $('pin').focus();
+  };
+  $('leaderExit').onclick = () => { setLeader(null); loadPresent(); };
+
+  $('pinForm').onsubmit = async (e) => {
+    e.preventDefault();
+    $('pinMsg').textContent = 'Checking…';
+    try {
+      const data = await post({ action: 'leader', pin: $('pin').value });
+      if (!data.ok) { $('pinMsg').textContent = PIN_ERRORS[data.error] || data.error; return; }
+      setLeader($('pin').value);
+      $('pinPanel').hidden = true;
+      loadPresent();
+    } catch (err) {
+      $('pinMsg').textContent = 'Could not check the PIN. (' + err.message + ')';
+    }
+  };
+
+  let editing = null;
+  function openEdit(name) {
+    editing = name;
+    const d = new Date(present[name].time);
+    $('editTitle').textContent = name;
+    $('editTime').value = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    $('editRemarks').value = present[name].remarks || '';
+    $('editMsg').textContent = '';
+    $('editSave').disabled = false;
+    $('editPanel').hidden = false;
+  }
+
+  $('editForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const [h, m] = $('editTime').value.split(':').map(Number);
+    const d = new Date(); d.setHours(h, m, 0, 0);
+    $('editSave').disabled = true;
+    $('editMsg').textContent = 'Saving…';
+    try {
+      const data = await post({ action: 'edit', pin: leaderPin, name: editing,
+        time: d.toISOString(), remarks: $('editRemarks').value.trim() });
+      if (!data.ok) {
+        $('editMsg').textContent = PIN_ERRORS[data.error] || data.error;
+        $('editSave').disabled = false;
+        return;
+      }
+      $('editPanel').hidden = true;
+      loadPresent();
+    } catch (err) {
+      $('editMsg').textContent = 'Not saved, please try again. (' + err.message + ')';
+      $('editSave').disabled = false;
+    }
+  };
+
+  document.querySelectorAll('[data-close]').forEach((b) =>
+    b.onclick = () => { b.closest('.overlay').hidden = true; });
+
   // Keep the list fresh: on open, when the phone comes back to the page, and every minute.
   document.addEventListener('visibilitychange', () => { if (!document.hidden) loadPresent(); });
   setInterval(() => { if (!document.hidden && !$('form').hidden) loadPresent(); }, 60000);
+  setLeader(leaderPin);
   render();
   loadPresent();
 </script>

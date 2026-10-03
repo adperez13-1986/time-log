@@ -7,9 +7,11 @@ Scan a QR code, tap your name, confirm. The time goes into a Google Sheet.
 
 ## Sheet columns (tab "Log")
 
-| Logged at | Name | Time | Time entered by hand | Remarks |
-|---|---|---|---|---|
-| when the server got it | who | the time being logged (= Logged at, unless entered by hand) | `yes` if entered by hand | optional, e.g. reason for being late |
+| Logged at | Name | Time | Time entered by hand | Remarks | Edited by leader |
+|---|---|---|---|---|---|
+| when the server got it | who | the time being logged (= Logged at, unless entered by hand) | `yes` if entered by hand | optional, e.g. reason for being late | when a leader last changed Time/Remarks |
+
+Attendance is per day (Vienna time). Each name can log once per day.
 
 ## Setup (one time)
 
@@ -21,9 +23,14 @@ Scan a QR code, tap your name, confirm. The time goes into a Google Sheet.
    - Execute as: **Me**
    - Who has access: **Anyone**
    - Authorize when asked ("Advanced > Go to ... (unsafe)" is expected for your own script).
-6. Copy the web app URL (ends in `/exec`) into `TIME_LOG_ENDPOINT` in `names.js`.
+6. Project Settings (gear) > Script Properties > add `LEADER_PIN` with the leaders' PIN. (Not in the code: the repo is public.)
+7. Copy the web app URL (ends in `/exec`) into `TIME_LOG_ENDPOINT` in `names.js`.
 
 When you change `Code.gs` later: Deploy > Manage deployments > edit > Version: New version. That keeps the same URL.
+
+## Leader mode
+
+"Leader" link at the bottom of the page, then the PIN. Leaders can tap anyone already logged today and change their time and remarks. 5 wrong PINs lock leader mode for 15 minutes. Older days: edit the Sheet.
 
 ## Names
 
