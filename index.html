@@ -8,13 +8,13 @@
   :root {
     --bg: #f6f7f9; --card: #fff; --text: #1d2330; --muted: #6b7280; --line: #e3e6eb;
     --accent: #2f5bd3; --accent-text: #fff; --ok: #1f8a4c; --err: #c0392b;
-    --g1: #dbe5f1; --g2: #f1d3ee; --g3: #c4e5f3; --g4: #a9d6ee; --g5: #fbe6b3;
+    --g1: #dbe5f1; --g2: #f1d3ee; --g3: #c4e5f3; --g4: #a9d6ee; --g5: #fbe6b3; --g-mdn: #1b3a66; --g-other: #e6e8ec;
   }
   @media (prefers-color-scheme: dark) {
     :root {
       --bg: #12151b; --card: #1b2029; --text: #e8ebf0; --muted: #9aa3b2; --line: #2c3340;
       --accent: #6d8ff0; --accent-text: #0d1220; --ok: #4cc283; --err: #ef6b5b;
-      --g1: #26334a; --g2: #47284a; --g3: #1e4253; --g4: #1b4a66; --g5: #4d4022;
+      --g1: #26334a; --g2: #47284a; --g3: #1e4253; --g4: #1b4a66; --g5: #4d4022; --g-mdn: #1b3a66; --g-other: #2a2f38;
     }
   }
   * { box-sizing: border-box; }
@@ -30,6 +30,8 @@
   .group-title { grid-column: 1 / -1; display: flex; justify-content: space-between;
     font-weight: 700; font-size: 14px; letter-spacing: .04em; padding: 2px 4px 0; }
   .group-title span { font-weight: 400; color: var(--muted); }
+  .group[data-group="MDN"] .group-title, .group[data-group="MDN"] .group-title span { color: #fff; }
+  .group[data-group="MDN"] .name.present { background: rgba(255,255,255,.8); color: #4b5563; }
   .name { appearance: none; border: 2px solid transparent; background: var(--card); color: var(--text);
     border-radius: 9px; padding: 10px; font-size: 16px; text-align: left; cursor: pointer;
     display: flex; justify-content: space-between; align-items: center; gap: 6px; min-height: 48px; }
@@ -146,7 +148,10 @@
 
 <script src="names.js"></script>
 <script>
-  const GROUP_COLORS = ['var(--g1)', 'var(--g2)', 'var(--g3)', 'var(--g4)', 'var(--g5)'];
+  // Colours follow the group's name (from the church's attendance sheet), so adding or
+  // reordering groups in the People tab doesn't shift them. Unknown groups get a neutral grey.
+  const GROUP_COLORS = { MDN: 'var(--g-mdn)', JAM: 'var(--g1)', VIA: 'var(--g2)', TEAM: 'var(--g3)',
+    MAN: 'var(--g4)', SAN: 'var(--g5)' };
   // Groups of names come from the People tab in the Sheet.
   let GROUPS = [];
   let GROUP_NAMES = [];
@@ -169,7 +174,8 @@
     GROUPS.forEach((names, i) => {
       const g = document.createElement('div');
       g.className = 'group';
-      g.style.background = GROUP_COLORS[i % GROUP_COLORS.length];
+      g.dataset.group = String(GROUP_NAMES[i] || '').toUpperCase();
+      g.style.background = GROUP_COLORS[String(GROUP_NAMES[i] || '').toUpperCase()] || 'var(--g-other)';
       if (GROUP_NAMES[i]) {
         const t = document.createElement('div');
         t.className = 'group-title';
