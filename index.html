@@ -8,13 +8,13 @@
   :root {
     --bg: #f6f7f9; --card: #fff; --text: #1d2330; --muted: #6b7280; --line: #e3e6eb;
     --accent: #2f5bd3; --accent-text: #fff; --ok: #1f8a4c; --err: #c0392b;
-    --g1: #dbe5f1; --g2: #f1d3ee; --g3: #c4e5f3;
+    --g1: #dbe5f1; --g2: #f1d3ee; --g3: #c4e5f3; --g4: #a9d6ee; --g5: #fbe6b3;
   }
   @media (prefers-color-scheme: dark) {
     :root {
       --bg: #12151b; --card: #1b2029; --text: #e8ebf0; --muted: #9aa3b2; --line: #2c3340;
       --accent: #6d8ff0; --accent-text: #0d1220; --ok: #4cc283; --err: #ef6b5b;
-      --g1: #26334a; --g2: #47284a; --g3: #1e4253;
+      --g1: #26334a; --g2: #47284a; --g3: #1e4253; --g4: #1b4a66; --g5: #4d4022;
     }
   }
   * { box-sizing: border-box; }
@@ -143,7 +143,7 @@
 
 <script src="names.js"></script>
 <script>
-  const GROUP_COLORS = ['var(--g1)', 'var(--g2)', 'var(--g3)'];
+  const GROUP_COLORS = ['var(--g1)', 'var(--g2)', 'var(--g3)', 'var(--g4)', 'var(--g5)'];
   const ALL = window.TIME_LOG_GROUPS.flat();
   const $ = (id) => document.getElementById(id);
   let selected = null;
