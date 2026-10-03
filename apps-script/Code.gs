@@ -3,6 +3,7 @@
 // Attendance is per day (Vienna time): a name can be logged once per day.
 // Leaders (PIN in Script Properties as LEADER_PIN) can edit today's time and remarks.
 // Who can log lives in the "People" tab (Group | Name); edit it there, no redeploy needed.
+// Renaming someone in People also renames them in the Log tab (onEdit below).
 
 const SHEET_NAME = 'Log';
 const HEADERS = ['Logged at', 'Name', 'Time', 'Time entered by hand', 'Remarks', 'Edited by leader'];
@@ -160,6 +161,31 @@ function people() {
     groups[index[group]].push(name);
   });
   return groups;
+}
+
+// Runs whenever someone edits the Sheet by hand. When a name is changed in People,
+// the same name is replaced in the Log tab so old entries follow the new name.
+function onEdit(e) {
+  const range = e.range;
+  const sh = range.getSheet();
+  if (sh.getName() !== PEOPLE_SHEET || range.getColumn() !== 2 || range.getRow() < 2) return;
+  if (range.getNumRows() !== 1 || range.getNumColumns() !== 1) return;
+  const oldName = String(e.oldValue || '').trim();
+  const newName = String(e.value || '').trim();
+  if (!oldName || !newName || oldName === newName) return; // added, cleared, or unchanged
+
+  const ss = sh.getParent();
+  const names = sh.getRange(2, 2, Math.max(sh.getLastRow() - 1, 1), 1).getValues()
+    .map((r) => String(r[0]).trim());
+  if (names.filter((n) => n === newName).length > 1) {
+    ss.toast(`"${newName}" is already in People. Log not changed; use a different name.`, 'Rename', 10);
+    return;
+  }
+  const log = ss.getSheetByName(SHEET_NAME);
+  if (!log || log.getLastRow() < 2) return;
+  const count = log.getRange(2, COL.name, log.getLastRow() - 1, 1)
+    .createTextFinder(oldName).matchEntireCell(true).matchCase(true).replaceAllWith(newName);
+  ss.toast(`Renamed "${oldName}" to "${newName}" in ${count} log row(s).`, 'Rename', 5);
 }
 
 function parseToday(iso, now) {

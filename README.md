@@ -38,7 +38,7 @@ The Sheet's **People** tab (Group | Name) is the list. The script creates it on 
 
 - Add someone: new row, Group = the number of the colour section (1-5, or a new number for a new section), Name as it should show.
 - Remove someone: delete the row. Their past log rows stay.
-- Rename: change it in People, and Find and replace the old name in the Log tab's Name column.
+- Rename: change it in People. The script renames them in the Log tab too (one cell at a time; pasting over several cells won't). A name already used by someone else is refused.
 - Names must be unique (e.g. "Grace Perez" / "Grace Palomaria").
 
 No redeploy needed; the page picks changes up on next load (within a minute if open). `names.js` is only a fallback if the script is unreachable.
