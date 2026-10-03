@@ -7,9 +7,9 @@ Scan a QR code, tap your name, confirm. The time goes into a Google Sheet.
 
 ## Sheet columns (tab "Log")
 
-| Logged at | Name | Time | Time entered by hand |
-|---|---|---|---|
-| when the server got it | who | the time being logged (= Logged at, unless entered by hand) | `yes` if entered by hand |
+| Logged at | Name | Time | Time entered by hand | Remarks |
+|---|---|---|---|---|
+| when the server got it | who | the time being logged (= Logged at, unless entered by hand) | `yes` if entered by hand | optional, e.g. reason for being late |
 
 ## Setup (one time)
 

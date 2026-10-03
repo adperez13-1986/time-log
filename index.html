@@ -20,23 +20,29 @@
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--text);
     font: 16px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-  main { max-width: 480px; margin: 0 auto; padding: 20px 16px 120px; }
+  main { max-width: 480px; margin: 0 auto; padding: 20px 16px 140px; }
   h1 { font-size: 22px; margin: 4px 0 2px; }
-  .sub { color: var(--muted); margin: 0 0 18px; }
+  .sub { color: var(--muted); margin: 0 0 6px; }
+  .count { margin: 0 0 14px; font-weight: 600; }
+  .count span { color: var(--muted); font-weight: 400; }
   .group { border-radius: 12px; padding: 8px; margin-bottom: 10px;
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 6px; }
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 6px; }
   .name { appearance: none; border: 2px solid transparent; background: var(--card); color: var(--text);
-    border-radius: 9px; padding: 12px 10px; font-size: 16px; text-align: left; cursor: pointer; }
+    border-radius: 9px; padding: 10px; font-size: 16px; text-align: left; cursor: pointer;
+    display: flex; justify-content: space-between; align-items: center; gap: 6px; min-height: 48px; }
   .name[aria-pressed="true"] { border-color: var(--accent); font-weight: 600; }
+  .name.present { background: transparent; border-color: var(--line); color: var(--muted); cursor: default; }
+  .name .at { font-size: 13px; color: var(--ok); white-space: nowrap; }
   fieldset { border: 1px solid var(--line); background: var(--card); border-radius: 12px;
     padding: 12px 14px; margin: 16px 0 0; }
   legend { padding: 0 4px; color: var(--muted); font-size: 14px; }
   .radio { display: flex; align-items: center; gap: 10px; padding: 6px 0; }
   .radio input { width: 20px; height: 20px; margin: 0; }
-  .when { display: none; gap: 8px; margin-top: 8px; }
-  .when.show { display: flex; }
-  .when input { flex: 1; min-width: 0; font: inherit; padding: 10px; border: 1px solid var(--line);
+  .field { width: 100%; font: inherit; padding: 10px; border: 1px solid var(--line);
     border-radius: 8px; background: var(--bg); color: var(--text); }
+  #time { display: none; margin-top: 8px; }
+  #time.show { display: block; }
+  textarea.field { resize: vertical; min-height: 64px; }
   .bar { position: fixed; left: 0; right: 0; bottom: 0; background: var(--bg);
     border-top: 1px solid var(--line); padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); }
   .bar > div { max-width: 480px; margin: 0 auto; }
@@ -56,15 +62,17 @@
 <main id="form">
   <h1>Time Log</h1>
   <p class="sub">Tap your name, then confirm.</p>
+  <p class="count" id="count">Loading who's here…</p>
   <div id="groups"></div>
   <fieldset>
     <legend>Time</legend>
     <label class="radio"><input type="radio" name="mode" value="now" checked> Now</label>
-    <label class="radio"><input type="radio" name="mode" value="other"> Enter a time</label>
-    <div class="when" id="when">
-      <input type="date" id="date" aria-label="Date">
-      <input type="time" id="time" aria-label="Time">
-    </div>
+    <label class="radio"><input type="radio" name="mode" value="other"> Enter a time (today)</label>
+    <input type="time" id="time" class="field" aria-label="Time">
+  </fieldset>
+  <fieldset>
+    <legend>Remarks (optional)</legend>
+    <textarea id="remarks" class="field" maxlength="500" placeholder="e.g. reason for being late"></textarea>
   </fieldset>
 </main>
 
@@ -72,7 +80,7 @@
   <div class="check">&#10003;</div>
   <h2 id="doneTitle"></h2>
   <p id="doneTime"></p>
-  <button class="link" id="again">Log another</button>
+  <button class="link" id="again">Back to the list</button>
 </main>
 
 <div class="bar" id="bar">
@@ -85,16 +93,19 @@
 <script src="names.js"></script>
 <script>
   const GROUP_COLORS = ['var(--g1)', 'var(--g2)', 'var(--g3)'];
+  const ALL = window.TIME_LOG_GROUPS.flat();
   const $ = (id) => document.getElementById(id);
   let selected = null;
+  let present = {}; // name -> ISO time, today only (from the server)
 
   const store = {
     get() { try { return localStorage.getItem('timelog.name'); } catch { return null; } },
     set(v) { try { localStorage.setItem('timelog.name', v); } catch {} },
   };
 
+  const clock = (iso) => new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
   function render() {
-    const remembered = store.get();
     $('groups').innerHTML = '';
     window.TIME_LOG_GROUPS.forEach((names, i) => {
       const g = document.createElement('div');
@@ -102,47 +113,69 @@
       g.style.background = GROUP_COLORS[i % GROUP_COLORS.length];
       names.forEach((n) => {
         const b = document.createElement('button');
-        b.className = 'name';
         b.type = 'button';
-        b.textContent = n;
-        b.setAttribute('aria-pressed', 'false');
-        b.onclick = () => select(n);
+        b.className = 'name';
+        b.dataset.name = n;
+        b.appendChild(document.createTextNode(n));
+        if (present[n]) {
+          b.classList.add('present');
+          b.disabled = true;
+          const at = document.createElement('span');
+          at.className = 'at';
+          at.textContent = '✓ ' + clock(present[n]);
+          b.appendChild(at);
+        } else {
+          b.setAttribute('aria-pressed', String(n === selected));
+          b.onclick = () => select(n);
+        }
         g.appendChild(b);
       });
       $('groups').appendChild(g);
     });
-    if (remembered && window.TIME_LOG_GROUPS.flat().includes(remembered)) select(remembered);
   }
 
   function select(name) {
+    if (present[name]) name = null;
     selected = name;
-    document.querySelectorAll('.name').forEach((b) =>
-      b.setAttribute('aria-pressed', String(b.textContent === name)));
-    $('confirm').disabled = false;
-    $('confirm').textContent = 'Confirm — ' + name;
+    document.querySelectorAll('.name:not(.present)').forEach((b) =>
+      b.setAttribute('aria-pressed', String(b.dataset.name === name)));
+    $('confirm').disabled = !name;
+    $('confirm').textContent = name ? 'Confirm — ' + name : 'Confirm';
     $('msg').textContent = '';
   }
 
-  const pad = (n) => String(n).padStart(2, '0');
-  function fillNow() {
-    const d = new Date();
-    $('date').value = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-    $('time').value = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  async function loadPresent() {
+    try {
+      const res = await fetch(window.TIME_LOG_ENDPOINT);
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error);
+      present = {};
+      data.present.forEach((p) => { present[p.name] = p.time; });
+      const n = ALL.filter((x) => present[x]).length;
+      $('count').innerHTML = `${n} of ${ALL.length} present <span>today</span>`;
+    } catch (err) {
+      $('count').textContent = 'Could not load who is here. Pull down to refresh.';
+    }
+    render();
+    const want = selected || store.get();
+    select(ALL.includes(want) ? want : null); // select() drops anyone already present
   }
 
+  const pad = (n) => String(n).padStart(2, '0');
   document.querySelectorAll('input[name=mode]').forEach((r) => r.onchange = () => {
     const other = document.querySelector('input[name=mode]:checked').value === 'other';
-    $('when').classList.toggle('show', other);
-    if (other) fillNow();
+    $('time').classList.toggle('show', other);
+    if (other) { const d = new Date(); $('time').value = `${pad(d.getHours())}:${pad(d.getMinutes())}`; }
   });
 
   $('confirm').onclick = async () => {
     if (!selected) return;
-    if (!window.TIME_LOG_ENDPOINT) { $('msg').textContent = 'Not set up yet: no endpoint in names.js.'; return; }
-    const payload = { name: selected };
+    const payload = { name: selected, remarks: $('remarks').value.trim() };
     if (document.querySelector('input[name=mode]:checked').value === 'other') {
-      if (!$('date').value || !$('time').value) { $('msg').textContent = 'Pick a date and time.'; return; }
-      payload.time = new Date(`${$('date').value}T${$('time').value}`).toISOString();
+      if (!$('time').value) { $('msg').textContent = 'Pick a time.'; return; }
+      const [h, m] = $('time').value.split(':').map(Number);
+      const d = new Date(); d.setHours(h, m, 0, 0);
+      payload.time = d.toISOString();
     }
     $('confirm').disabled = true;
     $('confirm').textContent = 'Saving…';
@@ -154,8 +187,15 @@
         body: JSON.stringify(payload),
       });
       const data = await res.json();
+      if (data.error === 'already') {
+        const who = selected;
+        await loadPresent();
+        $('msg').textContent = `${who} is already logged today (${clock(data.time)}).`;
+        return;
+      }
       if (!data.ok) throw new Error(data.error || 'Could not save');
       store.set(selected);
+      present[data.name] = data.time;
       showDone(data);
     } catch (err) {
       $('msg').textContent = 'Not saved, please try again. (' + err.message + ')';
@@ -164,21 +204,26 @@
   };
 
   function showDone(data) {
-    const t = new Date(data.time);
     $('doneTitle').textContent = 'Logged, ' + data.name;
-    $('doneTime').textContent = t.toLocaleString([], { weekday: 'short', day: 'numeric', month: 'short',
-      hour: '2-digit', minute: '2-digit' }) + (data.manual ? ' (entered)' : '');
+    $('doneTime').textContent = new Date(data.time).toLocaleString([], { weekday: 'short', day: 'numeric',
+      month: 'short', hour: '2-digit', minute: '2-digit' }) + (data.manual ? ' (entered)' : '');
     $('form').hidden = true; $('bar').hidden = true; $('done').hidden = false;
   }
 
   $('again').onclick = () => {
     $('done').hidden = true; $('form').hidden = false; $('bar').hidden = false;
     document.querySelector('input[name=mode][value=now]').checked = true;
-    $('when').classList.remove('show');
-    select(selected);
+    $('time').classList.remove('show');
+    $('remarks').value = '';
+    selected = null;
+    loadPresent();
   };
 
+  // Keep the list fresh: on open, when the phone comes back to the page, and every minute.
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) loadPresent(); });
+  setInterval(() => { if (!document.hidden && !$('form').hidden) loadPresent(); }, 60000);
   render();
+  loadPresent();
 </script>
 </body>
 </html>
