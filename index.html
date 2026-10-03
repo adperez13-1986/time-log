@@ -144,7 +144,9 @@
 <script src="names.js"></script>
 <script>
   const GROUP_COLORS = ['var(--g1)', 'var(--g2)', 'var(--g3)', 'var(--g4)', 'var(--g5)'];
-  const ALL = window.TIME_LOG_GROUPS.flat();
+  // Groups of names come from the People tab in the Sheet (names.js is only a fallback).
+  let GROUPS = [];
+  let ALL = [];
   const $ = (id) => document.getElementById(id);
   let selected = null;
   let present = {}; // name -> { time, remarks? }, today only (from the server)
@@ -160,7 +162,7 @@
 
   function render() {
     $('groups').innerHTML = '';
-    window.TIME_LOG_GROUPS.forEach((names, i) => {
+    GROUPS.forEach((names, i) => {
       const g = document.createElement('div');
       g.className = 'group';
       g.style.background = GROUP_COLORS[i % GROUP_COLORS.length];
@@ -208,12 +210,15 @@
         return loadPresent();
       }
       if (!data.ok) throw new Error(data.error);
+      GROUPS = data.people || window.TIME_LOG_GROUPS || [];
+      ALL = GROUPS.flat();
       present = {};
       data.present.forEach((p) => { present[p.name] = p; });
       const n = ALL.filter((x) => present[x]).length;
       $('count').innerHTML = `${n} of ${ALL.length} present <span>today</span>`;
     } catch (err) {
       $('count').textContent = 'Could not load who is here. Pull down to refresh.';
+      if (!GROUPS.length) { GROUPS = window.TIME_LOG_GROUPS || []; ALL = GROUPS.flat(); }
     }
     render();
     const want = selected || store.get();

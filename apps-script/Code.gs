@@ -2,6 +2,7 @@
 // Bound to a Google Sheet. Each log appends one row to the "Log" tab.
 // Attendance is per day (Vienna time): a name can be logged once per day.
 // Leaders (PIN in Script Properties as LEADER_PIN) can edit today's time and remarks.
+// Who can log lives in the "People" tab (Group | Name); edit it there, no redeploy needed.
 
 const SHEET_NAME = 'Log';
 const HEADERS = ['Logged at', 'Name', 'Time', 'Time entered by hand', 'Remarks', 'Edited by leader'];
@@ -11,6 +12,16 @@ const SCAN_ROWS = 300;
 // Wrong PINs allowed before leader mode locks for LOCKOUT_SECONDS (for everyone).
 const MAX_PIN_FAILS = 5;
 const LOCKOUT_SECONDS = 15 * 60;
+
+const PEOPLE_SHEET = 'People';
+// Only used to fill the People tab the first time it is created.
+const SEED_PEOPLE = [
+  ['1', ['Jon', 'Ethan', 'Andre', 'Alyssa', 'Harry']],
+  ['2', ['Clayton', 'Grace Perez', 'Amy', 'Rhyzza', 'Abigail', 'Hazel', 'Richard', 'Lorrah']],
+  ['3', ['Adrian DG.', 'Hanika', 'Femi', 'Phia', 'Louise', 'Rosheen', 'Yannah', 'Sam', 'Kyree', 'Kyle']],
+  ['4', ['Jhondree', 'Adrian P.', 'Jajie', 'Kevin']],
+  ['5', ['Grace Palomaria', 'Betty', 'Au', 'Elsie', 'Shiennalyn', 'Joana', 'Rhoda', 'Allan', 'William', 'EJ', 'Bryan']],
+];
 
 const COL = { loggedAt: 1, name: 2, time: 3, manual: 4, remarks: 5, edited: 6 };
 
@@ -25,11 +36,12 @@ function doPost(e) {
   }
 }
 
-// Returns who is present today (no remarks; those are for leaders).
+// Returns everyone who can log, grouped, and who is present today (no remarks; those are for leaders).
 function doGet() {
   return json({
     ok: true,
     day: day(new Date()),
+    people: people(),
     present: today().map((r) => ({ name: r.name, time: r.time })),
   });
 }
@@ -38,6 +50,7 @@ function logTime(body) {
   const name = String(body.name || '').trim().slice(0, 80);
   const remarks = String(body.remarks || '').trim().slice(0, 500);
   if (!name) return { ok: false, error: 'Name is required' };
+  if (!people().some((g) => g.includes(name))) return { ok: false, error: name + ' is not in the People list' };
 
   const loggedAt = new Date();
   let time = loggedAt;
@@ -60,7 +73,11 @@ function logTime(body) {
 function leaderList(body) {
   const denied = checkPin(body.pin);
   if (denied) return denied;
-  return { ok: true, present: today().map((r) => ({ name: r.name, time: r.time, remarks: r.remarks })) };
+  return {
+    ok: true,
+    people: people(),
+    present: today().map((r) => ({ name: r.name, time: r.time, remarks: r.remarks })),
+  };
 }
 
 function leaderEdit(body) {
@@ -116,6 +133,33 @@ function today() {
     });
   });
   return out;
+}
+
+// People tab as groups of names, in sheet order. Blank rows are skipped, repeats ignored.
+function people() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sh = ss.getSheetByName(PEOPLE_SHEET);
+  if (!sh) {
+    sh = ss.insertSheet(PEOPLE_SHEET);
+    const rows = [['Group', 'Name']];
+    SEED_PEOPLE.forEach(([g, names]) => names.forEach((n) => rows.push([g, n])));
+    sh.getRange(1, 1, rows.length, 2).setValues(rows);
+    sh.setFrozenRows(1);
+  }
+  const last = sh.getLastRow();
+  if (last < 2) return [];
+  const groups = [];
+  const index = {};
+  const seen = {};
+  sh.getRange(2, 1, last - 1, 2).getValues().forEach(([g, n]) => {
+    const name = String(n).trim();
+    const group = String(g).trim();
+    if (!name || seen[name]) return;
+    seen[name] = true;
+    if (!(group in index)) { index[group] = groups.length; groups.push([]); }
+    groups[index[group]].push(name);
+  });
+  return groups;
 }
 
 function parseToday(iso, now) {

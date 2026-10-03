@@ -1,10 +1,10 @@
-// Who can log time. One inner array per group (shown as colored sections).
+// Fallback only: the real list is the "People" tab in the Google Sheet.
 window.TIME_LOG_GROUPS = [
   ['Jon', 'Ethan', 'Andre', 'Alyssa', 'Harry'],
-  ['Clayton', 'Grace', 'Amy', 'Rhyzza', 'Abigail', 'Hazel', 'Richard', 'Lorrah'],
+  ['Clayton', 'Grace Perez', 'Amy', 'Rhyzza', 'Abigail', 'Hazel', 'Richard', 'Lorrah'],
   ['Adrian DG.', 'Hanika', 'Femi', 'Phia', 'Louise', 'Rosheen', 'Yannah', 'Sam', 'Kyree', 'Kyle'],
   ['Jhondree', 'Adrian P.', 'Jajie', 'Kevin'],
-  ['Betty', 'Au', 'Elsie', 'Shiennalyn', 'Joana', 'Rhoda', 'Allan', 'William', 'EJ', 'Bryan'],
+  ['Grace Palomaria', 'Betty', 'Au', 'Elsie', 'Shiennalyn', 'Joana', 'Rhoda', 'Allan', 'William', 'EJ', 'Bryan'],
 ];
 
 // Paste the Apps Script web app URL here (ends in /exec).

@@ -32,6 +32,13 @@ When you change `Code.gs` later: Deploy > Manage deployments > edit > Version: N
 
 "Leader" link at the bottom of the page, then the PIN. Leaders can tap anyone already logged today and change their time and remarks. 5 wrong PINs lock leader mode for 15 minutes. Older days: edit the Sheet.
 
-## Names
+## Names (People tab)
 
-Edit `names.js`. Renaming someone in past entries: Edit > Find and replace in the Sheet, column B.
+The Sheet's **People** tab (Group | Name) is the list. The script creates it on first use.
+
+- Add someone: new row, Group = the number of the colour section (1-5, or a new number for a new section), Name as it should show.
+- Remove someone: delete the row. Their past log rows stay.
+- Rename: change it in People, and Find and replace the old name in the Log tab's Name column.
+- Names must be unique (e.g. "Grace Perez" / "Grace Palomaria").
+
+No redeploy needed; the page picks changes up on next load (within a minute if open). `names.js` is only a fallback if the script is unreachable.
